@@ -1,51 +1,39 @@
-// roadmaps.tsx
 import { useFocusEffect } from "@react-navigation/native";
 import { router, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
+  ScrollView, StyleSheet, Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   BG,
-  BORDER,
-  CARD,
   PRIMARY,
   TEXT,
   TEXT_MUTED,
 } from "@/constants/config";
+
 import {
-  RoadmapMeta,
-  RoadmapTopic,
-  fetchRoadmapTree,
+  deleteRoadmap,
   fetchRoadmaps,
+  RoadmapMeta,
   sortRoadmapsByCategory,
 } from "@/services/roadmap";
 
 export default function RoadmapsScreen() {
   const [roadmaps, setRoadmaps] = useState<RoadmapMeta[]>([]);
-  const [tree, setTree] = useState<Record<string, RoadmapTopic[]>>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const [list, t] = await Promise.all([
-        fetchRoadmaps(),
-        fetchRoadmapTree(),
-      ]);
-      setRoadmaps(sortRoadmapsByCategory(list));
-      setTree(t);
+      const data = await fetchRoadmaps();
+      setRoadmaps(sortRoadmapsByCategory(data));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+      console.log(e);
     } finally {
       setLoading(false);
     }
@@ -57,108 +45,218 @@ export default function RoadmapsScreen() {
     }, [load])
   );
 
+  // 🔥 фейковый прогресс (потом заменим API)
+  const getProgress = () => Math.floor(Math.random() * 100);
+
+  // 🔥 уровень по названию
+  const getLevel = (title: string) => {
+    if (title.toLowerCase().includes("backend")) return "INTERMEDIATE";
+    return "BEGINNER";
+  };
+  const handleDelete = async (id: string) => {
+  try {
+    await deleteRoadmap(id);
+    load(); // обновляем список
+  } catch (e) {
+    console.log("DELETE ERROR:", e);
+  }
+};
+
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.screenTitle}>Roadmaps</Text>
-        <Text style={styles.screenSub}>
-          Backend · Frontend · AI · DevOps · UI/UX — темы с прогрессом с сервера.
-        </Text>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.container}>
+
+        <Text style={styles.screenTitle}>Мои дорожные карты</Text>
 
         {loading ? (
-          <ActivityIndicator color={PRIMARY} style={{ marginTop: 32 }} />
-        ) : null}
-        {error ? <Text style={styles.err}>{error}</Text> : null}
+          <ActivityIndicator color={PRIMARY} style={{ marginTop: 40 }} />
+        ) : (
+          <>
+            {/* ✅ МОИ ROADMAPS */}
+            {roadmaps.map((rm) => {
+              const progress = getProgress();
 
-        {!loading &&
-          roadmaps.map((rm) => {
-            const topics = tree[rm.id] ?? [];
-            return (
-              <View key={rm.id} style={styles.section}>
-                <Text style={styles.sectionTitle}>{rm.title}</Text>
-                {topics.length === 0 ? (
-                  <Text style={styles.empty}>Нет тем в этом направлении</Text>
-                ) : (
-                  topics.map((topic) => {
-                    const locked = topic.status === "locked";
-                    const onPress = () => {
-                      if (locked) return;
-                      router.push(
-                        `/topic/${topic.id}?title=${encodeURIComponent(topic.title)}` as Href
-                      );
-                    };
-                    return (
-                      <TouchableOpacity
-                        key={topic.id}
-                        style={[styles.topicRow, locked && styles.topicLocked]}
-                        onPress={onPress}
-                        disabled={locked}
-                        activeOpacity={locked ? 1 : 0.7}
-                      >
-                        <View style={styles.topicMain}>
-                          <Text
-                            style={[
-                              styles.topicTitle,
-                              locked && styles.topicTitleDisabled,
-                            ]}
-                            numberOfLines={2}
-                          >
-                            {topic.title}
-                          </Text>
-                          <Text style={styles.topicStatus}>{topic.status}</Text>
-                        </View>
-                        <Text style={styles.chev}>{locked ? "🔒" : "›"}</Text>
-                      </TouchableOpacity>
-                    );
-                  })
-                )}
-              </View>
-            );
-          })}
+              return (
+                <View key={rm.id} style={styles.card}>
+                  
+                  <Text style={styles.level}>
+                    {getLevel(rm.title)}
+                  </Text>
+
+                  <Text style={styles.title}>{rm.title}</Text>
+
+                  <Text style={styles.desc}>
+                    React, Vue және заманауи интерфейстер
+                  </Text>
+
+                  {/* Прогресс */}
+                  <View style={styles.progressWrap}>
+                    <View style={styles.progressBar}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          { width: `${progress}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.percent}>{progress}%</Text>
+                  </View>
+
+                  {/* Кнопки */}
+                  <View style={styles.row}>
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={() =>
+                        router.push(`/roadmap/${rm.id}` as Href)
+                      }
+                    >
+                      <Text style={styles.buttonText}>
+                        Открыть карту
+                      </Text>
+                    </TouchableOpacity>
+
+
+                   <TouchableOpacity
+  style={styles.deleteBtn}
+  onPress={() => handleDelete(rm.id)}
+>
+  <Text style={styles.deleteText}>Удалить</Text>
+</TouchableOpacity>
+                 </View>
+
+                </View>
+              );
+            })}
+
+            {/* ✅ ДОБАВИТЬ НАПРАВЛЕНИЕ */}
+            <Text style={styles.sectionTitle}>
+              Добавить направление
+            </Text>
+
+            <View style={styles.card}>
+              <Text style={styles.level}>INTERMEDIATE</Text>
+
+              <Text style={styles.title}>DevOps Engineering</Text>
+
+              <Text style={styles.desc}>
+                CI/CD, Docker, Cloud
+              </Text>
+
+              <TouchableOpacity style={styles.button}>
+                <Text style={styles.buttonText}>
+                  Пройти оценку
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BG },
-  scroll: { padding: 20, paddingBottom: 40 },
+  safe: {
+    flex: 1,
+    backgroundColor: BG,
+  },
+
+  container: {
+    padding: 16,
+  },
+
   screenTitle: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: TEXT,
-    marginBottom: 6,
-  },
-  screenSub: { fontSize: 14, color: TEXT_MUTED, marginBottom: 20, lineHeight: 20 },
-  err: { color: "#dc2626", marginBottom: 12 },
-  section: { marginBottom: 22 },
-  sectionTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "700",
-    color: PRIMARY,
-    marginBottom: 10,
+    marginBottom: 16,
+    color: TEXT,
   },
-  empty: { color: TEXT_MUTED, fontSize: 14 },
-  topicRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: CARD,
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginVertical: 12,
+    color: TEXT,
+  },
+
+  card: {
+    backgroundColor: "#fff",
+    padding: 16,
     borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: BORDER,
+    marginBottom: 16,
+    elevation: 3,
   },
-  topicLocked: { opacity: 0.55 },
-  topicMain: { flex: 1 },
-  topicTitle: { fontSize: 16, fontWeight: "600", color: TEXT },
-  topicTitleDisabled: { color: TEXT_MUTED },
-  topicStatus: {
+
+  level: {
+    fontSize: 12,
+    color: TEXT_MUTED,
+    marginBottom: 4,
+  },
+
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+    color: TEXT,
+  },
+
+  desc: {
+    fontSize: 13,
+    color: TEXT_MUTED,
+    marginBottom: 12,
+  },
+
+  progressWrap: {
+    marginBottom: 12,
+  },
+
+  progressBar: {
+    height: 6,
+    backgroundColor: "#eee",
+    borderRadius: 6,
+    overflow: "hidden",
+  },
+
+  progressFill: {
+    height: "100%",
+    backgroundColor: PRIMARY,
+  },
+
+  percent: {
     marginTop: 4,
     fontSize: 12,
     color: TEXT_MUTED,
-    textTransform: "capitalize",
   },
-  chev: { fontSize: 20, color: PRIMARY, marginLeft: 8 },
+
+  row: {
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  button: {
+    flex: 1,
+    backgroundColor: PRIMARY,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+
+  deleteBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: PRIMARY,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  deleteText: {
+    color: PRIMARY,
+    fontWeight: "600",
+  },
 });

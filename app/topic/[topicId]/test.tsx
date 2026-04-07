@@ -30,42 +30,6 @@ type NormalizedQ = {
   correctIndex: number;
 };
 
-const MOCK_QUESTIONS: NormalizedQ[] = [
-  {
-    id: "m1",
-    question: "Что такое компонент в React?",
-    options: [
-      "Переиспользуемый кусок UI",
-      "Только функция без JSX",
-      "Стиль CSS",
-      "Тип базы данных",
-    ],
-    correctIndex: 0,
-  },
-  {
-    id: "m2",
-    question: "Зачем нужен state?",
-    options: [
-      "Хранить данные, от которых зависит интерфейс",
-      "Только для навигации",
-      "Только для стилей",
-      "Только для API",
-    ],
-    correctIndex: 0,
-  },
-  {
-    id: "m3",
-    question: "Что делает useEffect?",
-    options: [
-      "Побочные эффекты после рендера (запросы, подписки)",
-      "Объявляет стили",
-      "Создаёт маршрут",
-      "Компилирует TypeScript",
-    ],
-    correctIndex: 0,
-  },
-];
-
 function optionLabel(opt: unknown): string {
   if (typeof opt === "string") return opt;
   if (opt && typeof opt === "object" && "label" in opt) {
@@ -137,15 +101,14 @@ export default function TopicTestScreen() {
     try {
       const data = await fetchTopicTest(id);
       let list = normalizeQuestions(data);
-      if (list.length === 0) list = MOCK_QUESTIONS;
       setQuestions(list);
       setStep(0);
       setSelected(null);
       setAnswers([]);
       setPhase("quiz");
     } catch (e) {
-      setQuestions(MOCK_QUESTIONS);
-      setError(e instanceof Error ? e.message : null);
+      setQuestions([]);
+      setError(e instanceof Error ? e.message : "Ошибка");
     } finally {
       setLoading(false);
     }

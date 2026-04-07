@@ -33,6 +33,11 @@ export async function completeRoadmapNode(nodeId: string): Promise<void> {
     body: JSON.stringify({ nodeId }),
   });
 }
+export async function deleteRoadmap(roadmapId: string) {
+  return apiFetch(`/collection/${roadmapId}`, {
+    method: "DELETE",
+  });
+}
 
 /** Порядок категорий как в ТЗ (по подстроке в title) */
 const CATEGORY_ORDER = [

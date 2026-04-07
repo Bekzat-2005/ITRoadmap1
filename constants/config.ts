@@ -3,7 +3,10 @@
  * Можно задать EXPO_PUBLIC_API_URL в .env
  */
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.3.4:5002";
+  process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:5002";
+  
+  // "http://192.168.3.4:5002";
+  // const API_BASE_URL = "http://localhost:5002";
 
 export const PRIMARY = "#5b3df5";
 export const BG = "#f3f4f6";

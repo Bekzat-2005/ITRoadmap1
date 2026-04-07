@@ -15,6 +15,7 @@ export default function TabsLayout() {
           backgroundColor: "#fff",
           borderTopColor: "#e5e7eb",
         },
+        tabBarScrollEnabled: true,
       }}
     >
       <Tabs.Screen
@@ -32,6 +33,33 @@ export default function TabsLayout() {
           title: "Roadmaps",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="map-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="daily-tasks"
+        options={{
+          title: "Задания",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="checkbox-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="community"
+        options={{
+          title: "Сообщество",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubbles-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="vacancies"
+        options={{
+          title: "Вакансии",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="briefcase-outline" size={size} color={color} />
           ),
         }}
       />
